@@ -30,6 +30,7 @@ runs:
     - name: Deploy to AWS
       run: |
         aws configure set default.s3.max_concurrent_requests 50
+        aws s3 rm s3://ec-admins/${{ inputs.bucket_name }} --recursive  
         aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=31536000 --exclude "index.html"
         aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=0 --exclude "*" --include "index.html"
       shell: bash
