@@ -44,7 +44,8 @@ runs:
       shell: bash
 
     - name: check if bucket_name is prod
-      id: check-tag
+      if: inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
+      id: check-bucket_name-tag
       run: |
         if [[ ${{ inputs.bucket_name }} == *-prod ]]; then
           echo "match=true" >> $GITHUB_OUTPUT
@@ -52,14 +53,14 @@ runs:
       shell: bash
 
     - name: trim bucket_name
-      if: steps.check-tag.outputs.match == 'true'
+      if: steps.check-bucket_name-tag.outputs.match == 'true'
       run: |
         app_name_trimmed=$(echo ${{ inputs.bucket_name }} | awk -F '-' '{OFS="-"; $NF=""; print $0}' | sed 's/-$//')
         echo "APP_NAME=$app_name_trimmed" >> $GITHUB_ENV
       shell: bash
 
     - name: Hector slack Notifications
-      if: steps.check-tag.outputs.match == 'true' && inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
+      if: steps.check-bucket_name-tag.outputs.match == 'true' && inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
       uses: slackapi/slack-github-action@v1.26.0
       with:
         channel-id: ${{ inputs.SLACK_CHANNEL }}
