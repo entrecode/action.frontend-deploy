@@ -18,7 +18,10 @@ deploy:
         with:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }} 
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          bucket_name: ${{ needs.build.outputs.bucket_name }}
+          bucket_name: ${{ needs.build.outputs.bucket_name }}          
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }} 
+          SLACK_CHANNEL: ${{ vars.SLACK_CHANNEL }}
+
 ```
 
 ## inputs
@@ -30,5 +33,7 @@ All inputs are requried to run the action
 | `AWS_ACCESS_KEY_ID`     | String   | AWS_ACCESS_KEY_ID as GitHub variable        |
 | `AWS_SECRET_ACCESS_KEY` | String   | AWS_SECRET_ACCESS_KEY as GitHub secret      |
 | `bucket_name`           | String   | Name of the s3 bucket from build.outputs    |
+| `SLACK_TOKEN`           | String   | SLACK_TOKEN for Deployment Bot App in Slack |
+| `SLACK_CHANNEL`         | String   | Name of the SLACK_CHANNEL for the slack-notifications |
 
 `AWS_ACCESS_KEY_ID` is defined in GitHub as action-variables, `AWS_SECRET_ACCESS_KEY` is defined in GitHub as action-secrets and `bucket_name` results from build-outputs. They are all required.
