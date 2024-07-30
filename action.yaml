@@ -11,6 +11,14 @@ inputs:
   bucket_name:
     description: 'build.outputs.bucket_name'
     required: true
+  SLACK_TOKEN:
+    description: 'slack token'
+    required: false
+    default: ''
+  SLACK_CHANNEL:
+    description: 'slack channel'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -34,3 +42,40 @@ runs:
         aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=31536000 --exclude "index.html"
         aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=0 --exclude "*" --include "index.html"
       shell: bash
+
+    - name: check if bucket_name is prod
+      id: check-tag
+      run: |
+        if [[ ${{ inputs.bucket_name }} == *-prod ]]; then
+          echo "match=true" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: trim bucket_name
+      if: steps.check-tag.outputs.match == 'true'
+      run: |
+        app_name_trimmed=$(echo ${{ inputs.bucket_name }} | awk -F '-' '{OFS="-"; $NF=""; print $0}' | sed 's/-$//')
+        echo "APP_NAME=$app_name_trimmed" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Hector slack Notifications
+      if: steps.check-tag.outputs.match == 'true' && inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
+      uses: slackapi/slack-github-action@v1.26.0
+      with:
+        channel-id: ${{ inputs.SLACK_CHANNEL }}
+        payload: |
+          {
+            "attachments": [
+              {
+                "pretext": "",
+                "color": "28a745",
+                "fields": [
+                  {
+                    "value": "Neue Version von  ${{ vars.APP_NAME }} ausgerollt"
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.SLACK_TOKEN }}
