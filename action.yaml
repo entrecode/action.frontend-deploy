@@ -72,7 +72,7 @@ runs:
                 "color": "28a745",
                 "fields": [
                   {
-                    "value": "Neue Version von  ${{ vars.APP_NAME }} ausgerollt"
+                    "value": "Neue Version von  ${{ env.APP_NAME }} ausgerollt"
                   }
                 ]
               }
