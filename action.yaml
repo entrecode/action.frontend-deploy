@@ -61,22 +61,13 @@ runs:
 
     - name: Hector slack Notifications
       if: steps.check-bucket_name-tag.outputs.match == 'true' && inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
-      uses: slackapi/slack-github-action@v1.26.0
+      uses: slackapi/slack-github-action@v2
       with:
-        channel-id: ${{ inputs.SLACK_CHANNEL }}
+        method: chat.postMessage
+        token: ${{ inputs.SLACK_TOKEN }}
         payload: |
-          {
-            "attachments": [
-              {
-                "pretext": "",
-                "color": "28a745",
-                "fields": [
-                  {
-                    "value": "Neue Version von  ${{ env.APP_NAME }} ausgerollt"
-                  }
-                ]
-              }
-            ]
-          }
-      env:
-        SLACK_BOT_TOKEN: ${{ inputs.SLACK_TOKEN }}
+          channel: ${{ inputs.SLACK_CHANNEL }}
+          attachments:
+            - color: "28a745"
+              fields:
+                - value: "Neue Version von  ${{ env.APP_NAME }} ausgerollt"
