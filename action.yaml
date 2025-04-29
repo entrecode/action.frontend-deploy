@@ -19,6 +19,14 @@ inputs:
     description: 'slack channel'
     required: false
     default: ''
+  version:
+    description: 'version of build output'
+    required: false
+    default: ''
+  DSB_LAYER_AUTH_PASSWORD:
+    description: 'password for authentication (dsb-layer)'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -71,3 +79,25 @@ runs:
             - color: "28a745"
               fields:
                 - value: "Neue Version von  ${{ env.APP_NAME }} ausgerollt"
+
+    - name: set Version stage
+      if: steps.check-bucket_name-tag.outputs.match == 'true'
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://dsb-layer.cachena.entrecode.de/updateCurrentVersion'
+        method: 'PUT'
+        username: "release"
+        password: ${{ inputs.DSB_LAYER_AUTH_PASSWORD }}
+        customHeaders: '{"Content-Type": "application/json"}'
+        data: '{"adminVersion": "${{ inputs.version }}"}'
+
+    - name: set Version prod
+      if: steps.check-bucket_name-tag.outputs.match == 'true'
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://dsb-layer.entrecode.de/updateCurrentVersion'
+        method: 'PUT'
+        username: "release"
+        password: ${{ inputs.DSB_LAYER_AUTH_PASSWORD }}
+        customHeaders: '{"Content-Type": "application/json"}'
+        data: '{"adminVersion": "${{ inputs.version }}"}'
