@@ -31,6 +31,10 @@ inputs:
     description: 'password for authentication (dsb-layer)'
     required: false
     default: ''
+  CLOUDFRONT_DISTRIBUTION_ID:
+    description: 'CloudFront distribution ID to invalidate when USE_S3_ROOT_FOLDER is true'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -59,6 +63,16 @@ runs:
         aws s3 sync ./ $S3_BUCKET_PATH --cache-control max-age=31536000 --exclude "index.html" --exclude "OidcTrustedDomains.*"
         aws s3 sync ./ $S3_BUCKET_PATH --cache-control max-age=0 --exclude "*" --include "index.html" --include "OidcTrustedDomains.*"
       shell: bash
+
+    - name: Invalidate CloudFront distribution
+      if: inputs.USE_S3_ROOT_FOLDER == 'true' && inputs.CLOUDFRONT_DISTRIBUTION_ID != ''
+      uses: chetan/invalidate-cloudfront-action@v2
+      with:
+        DISTRIBUTION: ${{ inputs.CLOUDFRONT_DISTRIBUTION_ID }}
+        PATHS: "/*"
+        AWS_REGION: "eu-central-1"
+        AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
 
     - name: check if bucket_name is prod
       if: inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
