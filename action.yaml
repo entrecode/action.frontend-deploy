@@ -67,7 +67,7 @@ runs:
     - name: Invalidate CloudFront distribution
       if: inputs.USE_S3_ROOT_FOLDER == 'true' && inputs.CLOUDFRONT_DISTRIBUTION_ID != ''
       uses: chetan/invalidate-cloudfront-action@v2
-      with:
+      env:
         DISTRIBUTION: ${{ inputs.CLOUDFRONT_DISTRIBUTION_ID }}
         PATHS: "/*"
         AWS_REGION: "eu-central-1"
