@@ -11,6 +11,10 @@ inputs:
   bucket_name:
     description: 'build.outputs.bucket_name'
     required: true
+  USE_S3_ROOT_FOLDER:
+    description: 'when true the build output will be deployed to the root folder of the s3 bucket identified by bucket_name, otherwise the build output will be deployed to the folder identified by bucket_name into ec-admins bucket'
+    required: false
+    default: 'false'
   SLACK_TOKEN:
     description: 'slack token'
     required: false
@@ -25,6 +29,10 @@ inputs:
     default: ''
   DSB_LAYER_AUTH_PASSWORD:
     description: 'password for authentication (dsb-layer)'
+    required: false
+    default: ''
+  CLOUDFRONT_DISTRIBUTION_ID:
+    description: 'CloudFront distribution ID to invalidate when USE_S3_ROOT_FOLDER is true'
     required: false
     default: ''
 
@@ -46,10 +54,25 @@ runs:
     - name: Deploy to AWS
       run: |
         aws configure set default.s3.max_concurrent_requests 50
-        aws s3 rm s3://ec-admins/${{ inputs.bucket_name }} --recursive  
-        aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=31536000 --exclude "index.html" --exclude "OidcTrustedDomains.*"
-        aws s3 sync ./ s3://ec-admins/${{ inputs.bucket_name }} --cache-control max-age=0 --exclude "*" --include "index.html" --include "OidcTrustedDomains.*"
+        if [[ "${{ inputs.USE_S3_ROOT_FOLDER }}" == "true" ]]; then
+          S3_BUCKET_PATH="s3://${{ inputs.bucket_name }}"
+        else
+          S3_BUCKET_PATH="s3://ec-admins/${{ inputs.bucket_name }}"
+        fi
+        aws s3 rm $S3_BUCKET_PATH --recursive  
+        aws s3 sync ./ $S3_BUCKET_PATH --cache-control max-age=31536000 --exclude "index.html" --exclude "OidcTrustedDomains.*"
+        aws s3 sync ./ $S3_BUCKET_PATH --cache-control max-age=0 --exclude "*" --include "index.html" --include "OidcTrustedDomains.*"
       shell: bash
+
+    - name: Invalidate CloudFront distribution
+      if: inputs.USE_S3_ROOT_FOLDER == 'true' && inputs.CLOUDFRONT_DISTRIBUTION_ID != ''
+      uses: chetan/invalidate-cloudfront-action@v2
+      env:
+        DISTRIBUTION: ${{ inputs.CLOUDFRONT_DISTRIBUTION_ID }}
+        PATHS: "/*"
+        AWS_REGION: "eu-central-1"
+        AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
 
     - name: check if bucket_name is prod
       if: inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
