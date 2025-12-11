@@ -39,6 +39,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: check bucket_name input
+      run: |
+        if [[ -z "${{ inputs.bucket_name }}" ]]; then
+          echo "bucket_name input is required, it is currently empty"
+          exit 1
+        fi
+      shell: bash
+
     - name: Download artifact
       uses: actions/download-artifact@v6
       with:
