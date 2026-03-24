@@ -48,12 +48,12 @@ runs:
       shell: bash
 
     - name: Download artifact
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: build_result
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v5
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
@@ -100,7 +100,7 @@ runs:
 
     - name: Hector slack Notifications
       if: steps.check-bucket_name-tag.outputs.match == 'true' && inputs.SLACK_TOKEN != '' && inputs.SLACK_CHANNEL != ''
-      uses: slackapi/slack-github-action@v2
+      uses: slackapi/slack-github-action@v3
       with:
         method: chat.postMessage
         token: ${{ inputs.SLACK_TOKEN }}
